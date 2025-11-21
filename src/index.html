@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThreeJS Solar System</title>
+    <style>
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .checkbox-row label {
+            margin-bottom: 0;
+            font-size: 12px;
+            color: #00aaff;
+            font-weight: bold;
+        }
+        
+        /* ... (Rest of CSS) ... */
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #000;
+            color: white;
+        }
+
+        /* --- TOP MENU BAR --- */
+        #top-menu {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 20;
+        }
+
+        .menu-btn {
+            background: rgba(0, 0, 0, 0.6);
+            color: #00aaff;
+            border: 1px solid #00aaff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 14px;
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-btn:hover,
+        .menu-btn.active {
+            background: #00aaff;
+            color: black;
+            box-shadow: 0 0 15px rgba(0, 170, 255, 0.5);
+        }
+
+        /* --- UI PANELS --- */
+        .ui-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 12px;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s, transform 0.3s, background-color 0.2s;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-20px);
+        }
+
+        .ui-panel.visible {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0);
+        }
+
+        .close-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+        }
+
+        .close-panel:hover {
+            color: white;
+        }
+
+        /* --- PANEL POSITIONS --- */
+        #controls {
+            top: 80px;
+            left: 20px;
+            width: 300px;
+        }
+
+        #settings-panel {
+            top: 80px;
+            right: 20px;
+            width: 240px;
+        }
+
+        /* --- COMMON ELEMENT STYLES --- */
+        button.action-btn {
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 6px 10px;
+            cursor: pointer;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 11px;
+            min-width: 45px;
+        }
+
+        button.action-btn:hover {
+            background: #444;
+        }
+
+        button.action-btn.active {
+            background: #00aaff;
+            border-color: #00aaff;
+            color: black;
+        }
+
+        button.pause {
+            border-color: #f55;
+            color: #faa;
+        }
+
+        button.pause.active {
+            background: #f00;
+            color: white;
+        }
+
+        button.reset {
+            background: #333;
+            border: 1px solid #666;
+            width: 100%;
+            margin-bottom: 15px;
+            font-weight: bold;
+            padding: 8px;
+            cursor: pointer;
+            color: white;
+            border-radius: 4px;
+        }
+
+        button.reset:hover {
+            background: #555;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+        }
+
+        .setting-group label {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .setting-group input[type=range] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .setting-group input[type=color] {
+            width: 100%;
+            height: 30px;
+            border: none;
+            cursor: pointer;
+            background: none;
+        }
+
+        .val-display {
+            float: right;
+            color: #00aaff;
+        }
+
+        #datetime-display {
+            color: #00aaff;
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+            font-size: 0.9em;
+            border-top: 1px solid #444;
+            padding-top: 10px;
+        }
+
+        /* Data Panel */
+        #data-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #0f0;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 280px;
+            pointer-events: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding: 2px;
+        }
+
+        /* Loader */
+        #loader-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s;
+        }
+
+        #progress-bar-container {
+            width: 200px;
+            height: 4px;
+            background: #333;
+            margin-top: 10px;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #00aaff;
+            transition: width 0.2s;
+        }
+    </style>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+
+<body>
+
+    <div id="loader-container">
+        <div id="loading-text">Initializing Physics Engine...</div>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+
+    <div id="top-menu">
+        <button id="toggle-time" class="menu-btn active">
+            <span>⏱</span> Time Control
+        </button>
+        <button id="toggle-visual" class="menu-btn active">
+            <span>👁</span> Visual Config
+        </button>
+    </div>
+
+    <div id="controls" class="ui-panel visible">
+        <button class="close-panel" onclick="togglePanel('controls')">✕</button>
+        <h3 style="margin-top:0; margin-bottom:15px; color:#00aaff;">Time Machine</h3>
+
+        <button id="btn-reset-time" class="reset">⟲ RESET TIME</button>
+
+        <div class="control-row">
+            <button class="action-btn speed-btn" data-speed="-31536000">◄◄ Year</button>
+            <button class="action-btn speed-btn" data-speed="-604800">◄ Week</button>
+            <button class="action-btn speed-btn" data-speed="-86400">◄ Day</button>
+            <button class="action-btn speed-btn pause" data-speed="0">|| Pause</button>
+        </div>
+
+        <div class="control-row">
+            <button id="btn-real" class="action-btn speed-btn" data-speed="1">Real ►</button>
+            <button class="action-btn speed-btn" data-speed="86400">Day ►</button>
+            <button class="action-btn speed-btn" data-speed="604800">Week ►</button>
+            <button class="action-btn speed-btn" data-speed="31536000">Year ►►</button>
+        </div>
+
+        <p style="margin:5px 0 0 0; font-size:12px; color:#aaa">Speed: <span id="speed-display" style="color:white">Real
+                Time</span></p>
+        <p id="datetime-display"></p>
+    </div>
+
+    <div id="settings-panel" class="ui-panel visible">
+        <button class="close-panel" onclick="togglePanel('settings-panel')">✕</button>
+        <h3 style="margin-top:0; margin-bottom:15px; color:#00aaff;">Visual Settings</h3>
+
+        <button id="btn-reset-visuals" class="reset">⟲ Reset Visuals</button>
+
+        <div class="setting-group">
+            <label>Planet Size <span id="disp-planet-scale" class="val-display">5.0</span></label>
+            <input type="range" id="input-planet-scale" min="0.1" max="10.0" step="0.1" value="5.0">
+        </div>
+
+        <div class="setting-group">
+            <label>Orbit Distance <span id="disp-universe-scale" class="val-display">1.0</span></label>
+            <input type="range" id="input-universe-scale" min="0.2" max="5.0" step="0.1" value="1.0">
+        </div>
+
+        <hr style="border-color:#333; margin-bottom:15px;">
+
+        <div class="checkbox-row">
+            <label>Show Black Hole</label>
+            <input type="checkbox" id="input-bh-visible" checked>
+        </div>
+        
+        <hr style="border-color:#333; margin-bottom:15px;">
+
+        <div class="setting-group">
+            <label>Meteor Density <span id="disp-meteor-count" class="val-display">2000</span></label>
+            <input type="range" id="input-meteor-count" min="0" max="2000" step="50" value="2000">
+        </div>
+        <div class="setting-group">
+            <label>Meteor Size <span id="disp-meteor-size" class="val-display">3</span></label>
+            <input type="range" id="input-meteor-size" min="0.1" max="5.0" step="0.1" value="3">
+        </div>
+        <div class="setting-group">
+            <label>Meteor Speed <span id="disp-meteor-speed" class="val-display">1.0</span></label>
+            <input type="range" id="input-meteor-speed" min="0.0" max="5.0" step="0.1" value="1.0">
+        </div>
+
+        <hr style="border-color:#333; margin-bottom:15px;">
+
+        <div class="setting-group">
+            <label>UI Opacity <span id="disp-ui-opacity" class="val-display">0.6</span></label>
+            <input type="range" id="input-ui-opacity" min="0.1" max="1.0" step="0.05" value="0.6">
+        </div>
+
+        <div class="setting-group">
+            <label>Orbit Opacity <span id="disp-orbit-opacity" class="val-display">0.4</span></label>
+            <input type="range" id="input-orbit-opacity" min="0.0" max="1.0" step="0.05" value="0.4">
+        </div>
+
+        <div class="setting-group">
+            <label>Orbit Color</label>
+            <input type="color" id="input-orbit-color" value="#7afff0">
+        </div>
+
+        <p style="font-size:10px; color:#888; line-height:1.4">
+            Adjusting these values changes the visual representation only. Accurate physics are maintained internally.
+        </p>
+    </div>
+
+    <div id="data-panel">
+        <table>
+            <tbody id="planet-data-body"></tbody>
+        </table>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+
+    <script>
+        window.togglePanel = function (panelId) {
+            const panel = document.getElementById(panelId);
+            const btnId = panelId === 'controls' ? 'toggle-time' : 'toggle-visual';
+            const btn = document.getElementById(btnId);
+
+            if (panel.classList.contains('visible')) {
+                panel.classList.remove('visible');
+                btn.classList.remove('active');
+            } else {
+                panel.classList.add('visible');
+                btn.classList.add('active');
+            }
+        }
+        document.getElementById('toggle-time').addEventListener('click', () => window.togglePanel('controls'));
+        document.getElementById('toggle-visual').addEventListener('click', () => window.togglePanel('settings-panel'));
+    </script>
+</body>
+
+</html>

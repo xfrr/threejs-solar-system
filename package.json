@@ -1,0 +1,17 @@
+{
+  "name": "threejs-solar-system",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^7.2.4"
+  },
+  "dependencies": {
+    "maath": "^0.10.8",
+    "three": "^0.160.0"
+  }
+}
